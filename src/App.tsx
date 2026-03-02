@@ -24,6 +24,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
+import JSZip from 'jszip';
 import debounce from 'lodash/debounce';
 
 // Load Prism languages
@@ -122,6 +123,7 @@ const Sidebar = ({
   onOpenFolder: () => void;
   isFileSystemSupported: boolean;
   onFileOperation: (type: 'create-file' | 'create-folder' | 'rename' | 'delete', nodeId: string) => void;
+  onExport: () => void;
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
@@ -204,19 +206,29 @@ const Sidebar = ({
         </div>
       </div>
       
-      <div className="p-4 border-b border-[#2a2a2a]">
-        {isFileSystemSupported ? (
+      <div className="p-4 border-b border-[#2a2a2a] flex flex-col gap-2">
+        <button 
+          onClick={onOpenFolder}
+          className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-900/20"
+        >
+          <FolderOpen size={16} />
+          {isFileSystemSupported ? 'Open Local Folder' : 'Select Folder (Fallback)'}
+        </button>
+        
+        {files.length > 0 && (
           <button 
-            onClick={onOpenFolder}
-            className="w-full py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-900/20"
+            onClick={onExport}
+            className="w-full py-2 px-3 bg-[#2a2a2a] hover:bg-[#333] text-gray-300 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all"
           >
-            <FolderOpen size={16} />
-            Open Local Folder
+            <Save size={14} />
+            Export as Zip
           </button>
-        ) : (
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-2 text-yellow-500 text-[10px]">
-            <AlertCircle size={14} className="shrink-0 mt-0.5" />
-            <p>Your browser doesn't support the File System Access API. Try Chrome or Edge.</p>
+        )}
+
+        {!isFileSystemSupported && (
+          <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-start gap-2 text-blue-400 text-[9px]">
+            <AlertCircle size={12} className="shrink-0 mt-0.5" />
+            <p>Using fallback mode. Changes must be exported as Zip to be saved permanently.</p>
           </div>
         )}
       </div>
@@ -275,6 +287,7 @@ export default function App() {
   const [showSearch, setShowSearch] = useState(false);
 
   const activeFile = findFileById(files, activeTabId);
+  const fallbackInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const savedTabs = localStorage.getItem('openTabIds');
@@ -330,15 +343,99 @@ export default function App() {
   );
 
   const handleOpenFolder = async () => {
+    if (!isFileSystemSupported) {
+      fallbackInputRef.current?.click();
+      return;
+    }
     try {
       // @ts-expect-error - showDirectoryPicker is a modern API
-      const directoryHandle = await window.showDirectoryPicker();
+      const directoryHandle = await window.showDirectoryPicker({
+        mode: 'readwrite'
+      });
       const rootNode = await scanDirectory(directoryHandle);
       setFiles([rootNode]);
       setIsSidebarOpen(true);
     } catch (err) {
       console.error('Error opening directory:', err);
+      // Fallback if user cancels or API fails
+      if (confirm('File System Access API failed or was cancelled. Use fallback folder selection?')) {
+        fallbackInputRef.current?.click();
+      }
     }
+  };
+
+  const handleOpenFolderFallback = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputFiles = e.target.files;
+    if (!inputFiles || inputFiles.length === 0) return;
+
+    const root: FileNode = {
+      id: 'root',
+      name: inputFiles[0].webkitRelativePath.split('/')[0] || 'Project',
+      type: 'folder',
+      children: []
+    };
+
+    for (let i = 0; i < inputFiles.length; i++) {
+      const file = inputFiles[i];
+      const path = file.webkitRelativePath.split('/').slice(1);
+      let current = root;
+
+      for (let j = 0; j < path.length; j++) {
+        const part = path[j];
+        const isLast = j === path.length - 1;
+
+        if (isLast) {
+          const content = await file.text();
+          current.children?.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: part,
+            type: 'file',
+            language: getLanguageFromExtension(part),
+            content,
+            isDirty: false
+          });
+        } else {
+          let folder = current.children?.find(c => c.name === part && c.type === 'folder');
+          if (!folder) {
+            folder = {
+              id: Math.random().toString(36).substr(2, 9),
+              name: part,
+              type: 'folder',
+              children: []
+            };
+            current.children?.push(folder);
+          }
+          current = folder;
+        }
+      }
+    }
+
+    setFiles([root]);
+    setIsSidebarOpen(true);
+  };
+
+  const handleExportZip = async () => {
+    const zip = new JSZip();
+    
+    const addToZip = (nodes: FileNode[], path = '') => {
+      nodes.forEach(node => {
+        const currentPath = path ? `${path}/${node.name}` : node.name;
+        if (node.type === 'file') {
+          zip.file(currentPath, node.content || '');
+        } else if (node.children) {
+          addToZip(node.children, currentPath);
+        }
+      });
+    };
+
+    addToZip(files);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${files[0]?.name || 'project'}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const scanDirectory = async (handle: FileSystemDirectoryHandle): Promise<FileNode> => {
@@ -512,7 +609,31 @@ export default function App() {
   };
 
   const handleSave = async () => {
-    if (!activeFile || !activeFile.handle) return;
+    if (!activeFile) return;
+    
+    if (!activeFile.handle) {
+      // Fallback: Download single file
+      const blob = new Blob([activeFile.content || ''], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = activeFile.name;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      setFiles(prev => {
+        const updateNodes = (nodes: FileNode[]): FileNode[] => {
+          return nodes.map(node => {
+            if (node.id === activeFile.id) return { ...node, isDirty: false };
+            if (node.children) return { ...node, children: updateNodes(node.children) };
+            return node;
+          });
+        };
+        return updateNodes(prev);
+      });
+      return;
+    }
+
     try {
       setIsSaving(true);
       const fileHandle = activeFile.handle as FileSystemFileHandle;
@@ -747,8 +868,20 @@ export default function App() {
             onOpenFolder={handleOpenFolder}
             isFileSystemSupported={isFileSystemSupported}
             onFileOperation={handleFileOperation}
+            onExport={handleExportZip}
           />
         </motion.aside>
+
+        {/* Hidden Fallback Input */}
+        <input 
+          type="file" 
+          ref={fallbackInputRef}
+          style={{ display: 'none' }}
+          // @ts-expect-error - webkitdirectory is a non-standard attribute
+          webkitdirectory="" 
+          directory=""
+          onChange={handleOpenFolderFallback}
+        />
 
         {/* Editor Area */}
         <main className="flex-1 flex flex-col min-w-0 bg-[#0f0f0f]">
