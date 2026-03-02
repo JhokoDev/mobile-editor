@@ -88,12 +88,36 @@ const findParentNode = (nodes: FileNode[], id: string): FileNode | null => {
   return null;
 };
 
-const convertSafUriToPath = (safUri: string): string => {
-  const documentId = safUri.split('/document/')[1];
-  if (!documentId) return '';
+const convertSafUriToPath = (safUri: string): string | null => {
+  if (!safUri || typeof safUri !== 'string') return null;
   
-  const decodedId = decodeURIComponent(documentId);
-  return decodedId.replace(/^primary:/, '/storage/emulated/0/');
+  // 1. Extract documentId
+  const parts = safUri.split('/document/');
+  if (parts.length < 2) return null;
+  const documentIdEncoded = parts[1];
+  
+  // 2. URL Decode
+  let documentId: string;
+  try {
+    documentId = decodeURIComponent(documentIdEncoded);
+  } catch {
+    return null;
+  }
+  
+  // 3. Split Storage Type
+  const colonIndex = documentId.indexOf(':');
+  if (colonIndex === -1) return null;
+  
+  const storageType = documentId.substring(0, colonIndex);
+  const relativePath = documentId.substring(colonIndex + 1);
+  
+  // 4. Validate Storage Type
+  if (storageType !== 'primary') {
+    return null;
+  }
+  
+  // 5. Construct Absolute Path
+  return `/storage/emulated/0/${relativePath}`;
 };
 
 // --- Components ---
@@ -824,7 +848,7 @@ export default function App() {
               <div className="hidden lg:flex items-center gap-2 ml-4 px-3 py-1 bg-white/5 rounded-full border border-white/10">
                 <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Path</span>
                 <span className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">
-                  {convertSafUriToPath(`content://com.android.externalstorage.documents/document/primary:${activeFile.name}`)}
+                  {convertSafUriToPath(`content://com.android.externalstorage.documents/document/primary:${activeFile.name}`) || 'N/A'}
                 </span>
               </div>
             )}
