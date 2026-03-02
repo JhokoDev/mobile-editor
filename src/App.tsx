@@ -114,7 +114,8 @@ const Sidebar = ({
   onClose,
   onOpenFolder,
   isFileSystemSupported,
-  onFileOperation
+  onFileOperation,
+  onExport
 }: { 
   files: FileNode[];
   onFileSelect: (file: FileNode) => void; 
@@ -356,9 +357,10 @@ export default function App() {
       setFiles([rootNode]);
       setIsSidebarOpen(true);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
       console.error('Error opening directory:', err);
-      // Fallback if user cancels or API fails
-      if (confirm('File System Access API failed or was cancelled. Use fallback folder selection?')) {
+      // Fallback if API fails (other than user cancel)
+      if (confirm('File System Access API failed. Use fallback folder selection?')) {
         fallbackInputRef.current?.click();
       }
     }
