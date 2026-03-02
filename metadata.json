@@ -1,0 +1,5 @@
+{
+  "name": "Mobile Code Studio",
+  "description": "A VS Code-inspired mobile-optimized code editor interface.",
+  "requestFramePermissions": []
+}
