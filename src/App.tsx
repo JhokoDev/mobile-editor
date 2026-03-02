@@ -1006,7 +1006,7 @@ export default function App() {
                   value={activeFile.content || ''}
                   onValueChange={(code) => updateFileContent(activeFile.id, code)}
                   highlight={(code) => highlightCode(code, activeFile.language || 'javascript')}
-                  onKeyDown={handleEditorKeyDown}
+                  onKeyDown={handleEditorKeyDown as unknown as React.KeyboardEventHandler<HTMLDivElement>}
                   padding={24}
                   style={{
                     fontFamily: '"JetBrains Mono", "Fira Code", monospace',
