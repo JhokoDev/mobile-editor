@@ -88,6 +88,14 @@ const findParentNode = (nodes: FileNode[], id: string): FileNode | null => {
   return null;
 };
 
+const convertSafUriToPath = (safUri: string): string => {
+  const documentId = safUri.split('/document/')[1];
+  if (!documentId) return '';
+  
+  const decodedId = decodeURIComponent(documentId);
+  return decodedId.replace(/^primary:/, '/storage/emulated/0/');
+};
+
 // --- Components ---
 
 const QuickCharBar = ({ onInsert }: { onInsert: (char: string) => void }) => {
@@ -812,6 +820,14 @@ export default function App() {
             <h1 className="font-bold text-sm hidden sm:block tracking-tight text-white">
               CodeStudio <span className="text-blue-500">Mobile</span>
             </h1>
+            {activeFile && (
+              <div className="hidden lg:flex items-center gap-2 ml-4 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Path</span>
+                <span className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">
+                  {convertSafUriToPath(`content://com.android.externalstorage.documents/document/primary:${activeFile.name}`)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
