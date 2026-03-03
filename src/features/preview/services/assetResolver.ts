@@ -23,6 +23,16 @@ export const resolveScriptTags = (
   return html.replace(
     /<script\s+[^>]*src=["']([^"']+)["'][^>]*><\/script>/g,
     (_, src) => {
+      // Block remote scripts and absolute paths
+      if (
+        src.startsWith('http://') || 
+        src.startsWith('https://') || 
+        src.startsWith('//') ||
+        src.startsWith('/')
+      ) {
+        return '';
+      }
+      
       const js = files[src];
       if (!js) return '';
       return `<script>${js}</script>`;
