@@ -18,7 +18,8 @@ import {
   Edit2,
   Search,
   FilePlus,
-  FolderPlus
+  FolderPlus,
+  Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Editor from 'react-simple-code-editor';
@@ -26,6 +27,9 @@ import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import JSZip from 'jszip';
 import debounce from 'lodash/debounce';
+
+import { usePreview } from './preview/usePreview';
+import { PreviewContainer } from './preview/PreviewContainer';
 
 // Load Prism languages
 import 'prismjs/components/prism-python';
@@ -320,6 +324,7 @@ export default function App() {
   const [isFileSystemSupported, setIsFileSystemSupported] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const { state: previewState, controller: previewController } = usePreview();
 
   const activeFile = findFileById(files, activeTabId);
   const fallbackInputRef = React.useRef<HTMLInputElement>(null);
@@ -355,7 +360,6 @@ export default function App() {
       if (!file.handle || !file.isDirty) return;
       try {
         const fileHandle = file.handle as FileSystemFileHandle;
-        // @ts-expect-error - createWritable is part of the API
         const writable = await fileHandle.createWritable();
         await writable.write(file.content || '');
         await writable.close();
@@ -570,7 +574,6 @@ export default function App() {
         if (node.handle) {
           const parent = findParentNode(files, nodeId);
           if (parent && parent.handle && parent.handle.kind === 'directory') {
-            // @ts-expect-error - removeEntry is part of the API
             await (parent.handle as FileSystemDirectoryHandle).removeEntry(node.name, { recursive: true });
           }
         }
@@ -673,7 +676,6 @@ export default function App() {
     try {
       setIsSaving(true);
       const fileHandle = activeFile.handle as FileSystemFileHandle;
-      // @ts-expect-error - createWritable is part of the API
       const writable = await fileHandle.createWritable();
       await writable.write(activeFile.content || '');
       await writable.close();
@@ -860,6 +862,16 @@ export default function App() {
         <div className="flex items-center gap-2">
           {activeFile && (
             <>
+              {activeFile.name.toLowerCase().endsWith('.html') && (
+                <button 
+                  onClick={() => previewController.openPreview(activeFile.content || '')}
+                  className="p-2 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium"
+                  title="Preview HTML"
+                >
+                  <Eye size={18} />
+                  <span className="hidden sm:inline">Preview</span>
+                </button>
+              )}
               <button onClick={() => setShowSearch(!showSearch)} className={`p-2 hover:bg-white/5 rounded-lg transition-colors ${showSearch ? 'text-blue-400 bg-blue-500/10' : 'text-gray-400'}`}>
                 <Search size={18} />
               </button>
@@ -1006,7 +1018,7 @@ export default function App() {
                   value={activeFile.content || ''}
                   onValueChange={(code) => updateFileContent(activeFile.id, code)}
                   highlight={(code) => highlightCode(code, activeFile.language || 'javascript')}
-                  onKeyDown={handleEditorKeyDown as unknown as React.KeyboardEventHandler<HTMLDivElement>}
+                  onKeyDown={handleEditorKeyDown as unknown as React.KeyboardEventHandler<HTMLDivElement> & React.KeyboardEventHandler<HTMLTextAreaElement>}
                   padding={24}
                   style={{
                     fontFamily: '"JetBrains Mono", "Fira Code", monospace',
@@ -1057,6 +1069,12 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <PreviewContainer 
+        isOpen={previewState.isOpen} 
+        html={previewState.html} 
+        onClose={previewController.closePreview} 
+      />
     </div>
   );
 }
