@@ -72,13 +72,37 @@ export const extractDisplayPathFromSafUri = (safUri: string): string | null => {
   return relativePath;
 };
 
-export const flattenFiles = (nodes: FileNode[], map: Record<string, string> = {}): Record<string, string> => {
+export const flattenFiles = async (
+  nodes: FileNode[], 
+  path = '', 
+  map: Record<string, string> = {},
+  includeFilenameOnly = true
+): Promise<Record<string, string>> => {
   for (const node of nodes) {
-    if (node.type === 'file' && node.content !== undefined) {
-      map[node.name] = node.content;
+    const currentPath = path ? `${path}/${node.name}` : node.name;
+    
+    if (node.type === 'file') {
+      let content = node.content;
+      if (content === undefined && node.handle && node.handle.kind === 'file') {
+        try {
+          const fileHandle = node.handle as FileSystemFileHandle;
+          const fileData = await fileHandle.getFile();
+          content = await fileData.text();
+        } catch (err) {
+          console.error(`Error loading content for ${node.name}:`, err);
+        }
+      }
+      if (content !== undefined) {
+        map[currentPath] = content;
+        // Also store by filename for simple relative lookups if requested
+        if (includeFilenameOnly && !map[node.name]) {
+          map[node.name] = content;
+        }
+      }
     }
+    
     if (node.children) {
-      flattenFiles(node.children, map);
+      await flattenFiles(node.children, currentPath, map, includeFilenameOnly);
     }
   }
   return map;

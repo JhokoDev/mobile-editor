@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import { FileNode } from '../types';
-import { getLanguageFromExtension } from '../utils/fileUtils';
+import { getLanguageFromExtension, flattenFiles } from '../utils/fileUtils';
 
 export const scanDirectory = async (handle: FileSystemDirectoryHandle): Promise<FileNode> => {
   const node: FileNode = {
@@ -33,19 +33,12 @@ export const exportAsZip = async (files: FileNode[]) => {
   if (files.length === 0) return;
   
   const zip = new JSZip();
+  const fileMap = await flattenFiles(files, '', {}, false);
   
-  const addToZip = (nodes: FileNode[], path = '') => {
-    nodes.forEach(node => {
-      const currentPath = path ? `${path}/${node.name}` : node.name;
-      if (node.type === 'file') {
-        zip.file(currentPath, node.content || '');
-      } else if (node.children) {
-        addToZip(node.children, currentPath);
-      }
-    });
-  };
+  Object.entries(fileMap).forEach(([path, content]) => {
+    zip.file(path, content);
+  });
 
-  addToZip(files);
   const blob = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

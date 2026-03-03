@@ -25,7 +25,8 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
       .filter(([name]) => name.endsWith('.css'))
       .map(([, content]) => content);
     
-    const allCss = collectCss(cssContents);
+    const uniqueCss = Array.from(new Set(cssContents));
+    const allCss = collectCss(uniqueCss);
     processedHtml = injectCssIntoHtml(processedHtml, allCss);
 
     // Fallback for empty HTML to avoid white screen

@@ -83,9 +83,9 @@ export default function App() {
         onToggleSearch={() => setShowSearch(!showSearch)}
         isSaving={isSaving}
         onSave={() => activeFile && saveFile(activeFile)}
-        onPreview={() => {
+        onPreview={async () => {
           if (activeFile) {
-            const fileMap = flattenFiles(files);
+            const fileMap = await flattenFiles(files);
             previewController.openPreview(activeFile.content || '', fileMap);
           }
         }}

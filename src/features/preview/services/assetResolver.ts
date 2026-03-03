@@ -9,7 +9,9 @@ export const resolveCssLinks = (
   return html.replace(
     /<link\s+[^>]*href=["']([^"']+)["'][^>]*>/g,
     (match, href) => {
-      const css = files[href];
+      // Normalize href: remove leading ./ or /
+      const cleanHref = href.replace(/^\.\//, '').replace(/^\//, '');
+      const css = files[cleanHref] || files[href];
       if (!css) return match; // Keep original tag for external links
       return `<style>${css}</style>`;
     }
@@ -23,7 +25,9 @@ export const resolveScriptTags = (
   return html.replace(
     /<script\s+[^>]*src=["']([^"']+)["'][^>]*><\/script>/g,
     (match, src) => {
-      const js = files[src];
+      // Normalize src: remove leading ./ or /
+      const cleanSrc = src.replace(/^\.\//, '').replace(/^\//, '');
+      const js = files[cleanSrc] || files[src];
       if (!js) return match; // Keep original tag for external scripts
       return `<script>${js}</script>`;
     }
