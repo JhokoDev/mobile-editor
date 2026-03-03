@@ -1,22 +1,23 @@
 import { useState, useCallback } from 'react';
-import { PreviewState, PreviewController } from './types';
+import { PreviewState, PreviewController, VirtualFileMap } from './types';
 
 export const usePreview = () => {
   const [state, setState] = useState<PreviewState>({
     isOpen: false,
     html: '',
+    files: {},
   });
 
-  const openPreview = useCallback((html: string) => {
-    setState({ isOpen: true, html });
+  const openPreview = useCallback((html: string, files: VirtualFileMap = {}) => {
+    setState({ isOpen: true, html, files });
   }, []);
 
   const closePreview = useCallback(() => {
     setState(prev => ({ ...prev, isOpen: false }));
   }, []);
 
-  const updatePreview = useCallback((html: string) => {
-    setState(prev => ({ ...prev, html }));
+  const updatePreview = useCallback((html: string, files: VirtualFileMap = {}) => {
+    setState(prev => ({ ...prev, html, files }));
   }, []);
 
   const controller: PreviewController = {

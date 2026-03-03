@@ -71,3 +71,15 @@ export const extractDisplayPathFromSafUri = (safUri: string): string | null => {
 
   return relativePath;
 };
+
+export const flattenFiles = (nodes: FileNode[], map: Record<string, string> = {}): Record<string, string> => {
+  for (const node of nodes) {
+    if (node.type === 'file' && node.content !== undefined) {
+      map[node.name] = node.content;
+    }
+    if (node.children) {
+      flattenFiles(node.children, map);
+    }
+  }
+  return map;
+};

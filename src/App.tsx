@@ -6,7 +6,7 @@ import { useEditor } from './hooks/useEditor';
 import { useDevice } from './hooks/useDevice';
 import { usePreview } from './preview/usePreview';
 import { FileNode, FileOperationType } from './types';
-import { findFileById } from './utils/fileUtils';
+import { findFileById, flattenFiles } from './utils/fileUtils';
 import { exportAsZip } from './services/fileService';
 
 // Components
@@ -83,7 +83,12 @@ export default function App() {
         onToggleSearch={() => setShowSearch(!showSearch)}
         isSaving={isSaving}
         onSave={() => activeFile && saveFile(activeFile)}
-        onPreview={() => activeFile && previewController.openPreview(activeFile.content || '')}
+        onPreview={() => {
+          if (activeFile) {
+            const fileMap = flattenFiles(files);
+            previewController.openPreview(activeFile.content || '', fileMap);
+          }
+        }}
       />
 
       <div className="flex flex-1 overflow-hidden relative">
@@ -155,6 +160,7 @@ export default function App() {
       <PreviewContainer 
         isOpen={previewState.isOpen} 
         html={previewState.html} 
+        files={previewState.files}
         onClose={previewController.closePreview} 
       />
     </div>

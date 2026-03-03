@@ -2,14 +2,37 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PreviewRenderer } from './PreviewRenderer';
+import { VirtualFileMap } from './types';
+import { resolveCssLinks } from '../features/preview/services/assetResolver';
+import { collectCss } from '../features/preview/services/cssCollector';
+import { injectCssIntoHtml } from '../features/preview/services/htmlComposer';
 
 interface PreviewContainerProps {
   isOpen: boolean;
   html: string;
+  files?: VirtualFileMap;
   onClose: () => void;
 }
 
-export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html, onClose }) => {
+export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html, files = {}, onClose }) => {
+  const composedHtml = React.useMemo(() => {
+    if (!isOpen) return '';
+
+    // Strategy 2: Resolve <link> tags
+    let processedHtml = resolveCssLinks(html, files);
+
+    // Strategy 1: Inject all CSS files if it's an HTML file and we want global styles
+    // For MVP, we'll collect all .css files and inject them if they aren't already linked
+    const cssContents = Object.entries(files)
+      .filter(([name]) => name.endsWith('.css'))
+      .map(([, content]) => content);
+    
+    const allCss = collectCss(cssContents);
+    processedHtml = injectCssIntoHtml(processedHtml, allCss);
+
+    return processedHtml;
+  }, [isOpen, html, files]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -39,7 +62,7 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
 
           {/* Content */}
           <div className="flex-1 relative overflow-hidden bg-white">
-            <PreviewRenderer html={html} />
+            <PreviewRenderer html={composedHtml} />
           </div>
           
           {/* Safe Area Inset for Mobile */}
