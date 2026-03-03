@@ -3,9 +3,8 @@ import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PreviewRenderer } from './PreviewRenderer';
 import { VirtualFileMap } from './types';
-import { resolveCssLinks } from '../features/preview/services/assetResolver';
 import { collectCss } from '../features/preview/services/cssCollector';
-import { injectCssIntoHtml } from '../features/preview/services/htmlComposer';
+import { injectCssIntoHtml, composePreviewDocument } from '../features/preview/services/htmlComposer';
 
 interface PreviewContainerProps {
   isOpen: boolean;
@@ -18,11 +17,10 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
   const composedHtml = React.useMemo(() => {
     if (!isOpen) return '';
 
-    // Strategy 2: Resolve <link> tags
-    let processedHtml = resolveCssLinks(html, files);
+    // Strategy 2: Resolve <link> and <script> tags
+    let processedHtml = composePreviewDocument({ html, files });
 
-    // Strategy 1: Inject all CSS files if it's an HTML file and we want global styles
-    // For MVP, we'll collect all .css files and inject them if they aren't already linked
+    // Strategy 1: Inject all CSS files if they aren't already linked
     const cssContents = Object.entries(files)
       .filter(([name]) => name.endsWith('.css'))
       .map(([, content]) => content);

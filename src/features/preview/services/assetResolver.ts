@@ -15,3 +15,17 @@ export const resolveCssLinks = (
     }
   );
 };
+
+export const resolveScriptTags = (
+  html: string,
+  files: VirtualFileMap
+): string => {
+  return html.replace(
+    /<script\s+[^>]*src=["']([^"']+)["'][^>]*><\/script>/g,
+    (_, src) => {
+      const js = files[src];
+      if (!js) return '';
+      return `<script>${js}</script>`;
+    }
+  );
+};
