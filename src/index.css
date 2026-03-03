@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Semantic Highlighter Tokens */
+.token-tag { color: #e06c75; } /* red */
+.token-attr-name { color: #d19a66; } /* orange */
+.token-attr-value { color: #98c379; } /* green */
+.token-comment { color: #5c6370; font-style: italic; }
+.token-doctype { color: #abb2bf; }
+.token-punctuation { color: #abb2bf; }
+.token-operator { color: #56b6c2; } /* cyan */
+.token-keyword { color: #c678dd; font-weight: 500; } /* purple */
+.token-function { color: #61afef; } /* blue */
+.token-variable { color: #e06c75; }
+.token-string { color: #98c379; }
+.token-number { color: #d19a66; }
+.token-selector { color: #e06c75; }
+.token-property { color: #d19a66; }
+.token-value { color: #98c379; }
+.token-at-rule { color: #c678dd; }
+
 :root {
   --background: #0f0f0f;
   --foreground: #e0e0e0;

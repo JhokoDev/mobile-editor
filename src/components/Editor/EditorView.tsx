@@ -1,7 +1,6 @@
 import React from 'react';
 import { X, FileCode, Search, ChevronUp, ChevronDown, Replace, ReplaceAll, Code2 } from 'lucide-react';
-import Editor from 'react-simple-code-editor';
-import Prism from 'prismjs';
+import { SmartEditor } from '../../features/editor/components/SmartEditor';
 import { FileNode } from '../../types';
 import { QuickCharBar } from '../QuickCharBar';
 
@@ -48,10 +47,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
   onReplace,
   onOpenFolder
 }) => {
-  const highlightCode = (code: string, language: string) => {
-    const prismLang = Prism.languages[language] || Prism.languages.javascript;
-    return Prism.highlight(code, prismLang, language);
-  };
 
   const findFileById = (nodes: FileNode[], id: string): FileNode | null => {
     for (const node of nodes) {
@@ -127,19 +122,12 @@ export const EditorView: React.FC<EditorViewProps> = ({
 
             <QuickCharBar onInsert={onInsertChar} />
 
-            <div className="flex-1 overflow-auto editor-textarea custom-scrollbar">
-              <Editor
+            <div className="flex-1 overflow-hidden editor-textarea custom-scrollbar">
+              <SmartEditor
                 value={activeFile.content || ''}
                 onValueChange={(code) => updateFileContent(activeFile.id, code)}
-                highlight={(code) => highlightCode(code, activeFile.language || 'javascript')}
-                padding={20}
+                language={activeFile.language as 'html' | 'css' | 'javascript' | 'js' || 'javascript'}
                 onKeyDown={onKeyDown}
-                style={{
-                  fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-                  fontSize: 14,
-                  minHeight: '100%',
-                  backgroundColor: 'transparent',
-                }}
                 className="min-h-full"
               />
             </div>
