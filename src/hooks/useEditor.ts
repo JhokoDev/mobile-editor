@@ -71,9 +71,11 @@ export const useEditor = (activeFile: FileNode | null, updateFileContent: (id: s
     setTimeout(handleSearch, 0);
   }, [activeFile, searchQuery, searchResults, searchIndex, updateFileContent, handleSearch]);
 
-  const handleEditorKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleEditorKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!activeFile) return;
-    const textarea = e.currentTarget;
+    const textarea = e.currentTarget as HTMLTextAreaElement;
+    if (!textarea || textarea.tagName !== 'TEXTAREA') return;
+    
     const { selectionStart, selectionEnd, value } = textarea;
 
     const pairs: Record<string, string> = {

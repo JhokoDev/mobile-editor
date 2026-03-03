@@ -13,7 +13,7 @@ interface EditorViewProps {
   onTabClose: (id: string, e: React.MouseEvent) => void;
   activeFile: FileNode | null;
   updateFileContent: (id: string, content: string) => void;
-  onKeyDown: React.KeyboardEventHandler<HTMLTextAreaElement>;
+  onKeyDown: React.KeyboardEventHandler<HTMLElement>;
   onInsertChar: (char: string) => void;
   showSearch: boolean;
   searchQuery: string;
