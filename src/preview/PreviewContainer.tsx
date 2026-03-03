@@ -1,10 +1,9 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { PreviewRenderer } from './PreviewRenderer';
+import { PreviewRuntime } from '../features/preview/runtime/PreviewRuntime';
 import { VirtualFileMap } from './types';
-import { collectCss } from '../features/preview/services/cssCollector';
-import { injectCssIntoHtml, composePreviewDocument } from '../features/preview/services/htmlComposer';
+import { composePreviewDocument } from '../features/preview/runtime/transformer';
 
 interface PreviewContainerProps {
   isOpen: boolean;
@@ -17,17 +16,8 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
   const composedHtml = React.useMemo(() => {
     if (!isOpen) return '';
 
-    // Strategy 2: Resolve <link> and <script> tags
-    let processedHtml = composePreviewDocument({ html, files });
-
-    // Strategy 1: Inject all CSS files if they aren't already linked
-    const cssContents = Object.entries(files)
-      .filter(([name]) => name.endsWith('.css'))
-      .map(([, content]) => content);
-    
-    const uniqueCss = Array.from(new Set(cssContents));
-    const allCss = collectCss(uniqueCss);
-    processedHtml = injectCssIntoHtml(processedHtml, allCss);
+    // Apply modular transformations
+    let processedHtml = composePreviewDocument(html, files);
 
     // Fallback for empty HTML to avoid white screen
     if (!processedHtml.trim()) {
@@ -60,17 +50,17 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
             <div className="ml-auto flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Preview
+                Sandboxed Preview
               </div>
               <div className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider">
-                Preview Mode
+                Secure Mode
               </div>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 relative overflow-hidden bg-white">
-            <PreviewRenderer html={composedHtml} />
+            <PreviewRuntime compiledHtml={composedHtml} />
           </div>
           
           {/* Safe Area Inset for Mobile */}
