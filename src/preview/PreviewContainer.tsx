@@ -28,6 +28,11 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
     const allCss = collectCss(cssContents);
     processedHtml = injectCssIntoHtml(processedHtml, allCss);
 
+    // Fallback for empty HTML to avoid white screen
+    if (!processedHtml.trim()) {
+      processedHtml = '<html><body><div style="padding: 20px; font-family: sans-serif; color: #666;">No content to preview.</div></body></html>';
+    }
+
     return processedHtml;
   }, [isOpen, html, files]);
 
@@ -35,11 +40,11 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, x: '100%' }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed inset-0 z-50 bg-white flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-[9999] bg-white flex flex-col"
         >
           {/* Header */}
           <div className="h-14 border-b border-gray-200 flex items-center px-4 bg-gray-50 flex-shrink-0">
@@ -51,7 +56,11 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({ isOpen, html
               <ArrowLeft size={20} />
               <span className="font-medium">Back to Editor</span>
             </button>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-4">
+              <div className="hidden md:flex items-center gap-2 text-xs text-gray-500">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Preview
+              </div>
               <div className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider">
                 Preview Mode
               </div>

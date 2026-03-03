@@ -1,24 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 interface PreviewRendererProps {
   html: string;
 }
 
 export const PreviewRenderer: React.FC<PreviewRendererProps> = ({ html }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    if (iframeRef.current) {
-      iframeRef.current.srcdoc = html;
-    }
-  }, [html]);
-
   return (
     <iframe
-      ref={iframeRef}
+      srcDoc={html}
       title="HTML Preview"
       className="w-full h-full border-none bg-white"
-      sandbox="allow-scripts"
+      sandbox="allow-scripts allow-forms allow-modals allow-popups allow-presentation"
       referrerPolicy="no-referrer"
     />
   );
