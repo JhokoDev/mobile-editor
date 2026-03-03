@@ -125,6 +125,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
               </div>
             )}
 
+            <QuickCharBar onInsert={onInsertChar} />
+
             <div className="flex-1 overflow-auto editor-textarea custom-scrollbar">
               <Editor
                 value={activeFile.content || ''}
@@ -141,8 +143,6 @@ export const EditorView: React.FC<EditorViewProps> = ({
                 className="min-h-full"
               />
             </div>
-            
-            <QuickCharBar onInsert={onInsertChar} />
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-600 p-8 text-center">
