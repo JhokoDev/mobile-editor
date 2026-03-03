@@ -8,9 +8,9 @@ export const resolveCssLinks = (
 ): string => {
   return html.replace(
     /<link\s+[^>]*href=["']([^"']+)["'][^>]*>/g,
-    (_, href) => {
+    (match, href) => {
       const css = files[href];
-      if (!css) return '';
+      if (!css) return match; // Keep original tag for external links
       return `<style>${css}</style>`;
     }
   );
@@ -22,19 +22,9 @@ export const resolveScriptTags = (
 ): string => {
   return html.replace(
     /<script\s+[^>]*src=["']([^"']+)["'][^>]*><\/script>/g,
-    (_, src) => {
-      // Block remote scripts and absolute paths
-      if (
-        src.startsWith('http://') || 
-        src.startsWith('https://') || 
-        src.startsWith('//') ||
-        src.startsWith('/')
-      ) {
-        return '';
-      }
-      
+    (match, src) => {
       const js = files[src];
-      if (!js) return '';
+      if (!js) return match; // Keep original tag for external scripts
       return `<script>${js}</script>`;
     }
   );
