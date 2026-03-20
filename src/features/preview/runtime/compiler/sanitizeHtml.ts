@@ -6,10 +6,7 @@ export const sanitizeHtml = (html: string): string => {
   return html
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
     .replace(/<base[^>]*>/gi, '')
-    .replace(/<meta\s+http-equiv=[^>]*>/gi, '')
-    // Also remove any remaining remote scripts/links that might have escaped previous steps
-    .replace(/<script\s+[^>]*src=["']https?:\/\/[^"']+["'][^>]*><\/script>/gi, '')
-    .replace(/<link\s+[^>]*href=["']https?:\/\/[^"']+["'][^>]*>/gi, '');
+    .replace(/<meta\s+http-equiv=[^>]*>/gi, '');
 };
 
 export interface ValidationError {

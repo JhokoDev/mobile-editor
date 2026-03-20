@@ -6,10 +6,6 @@ export const injectSecurityGuards = (html: string): string => {
   const guardScript = `
 <script>
 (function() {
-  window.fetch = () => Promise.reject(new Error("Network disabled"));
-  window.XMLHttpRequest = function() {
-    throw new Error("Network disabled");
-  };
   // Prevent access to parent
   Object.defineProperty(window, 'parent', { get: () => window });
   Object.defineProperty(window, 'top', { get: () => window });

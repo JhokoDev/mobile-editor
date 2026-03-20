@@ -9,13 +9,13 @@ import { normalizePath, isRemote } from './utils';
 export const resolveStyles = (html: string, files: VirtualFileMap): string => {
   return html.replace(/<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*>/gi, (match, href) => {
     if (isRemote(href)) {
-      return ''; // Remove remote stylesheets
+      return match; // Keep remote stylesheets
     }
     const cleanHref = normalizePath(href);
     const content = files[cleanHref] || files[href];
     if (content !== undefined) {
       return `<style>${content}</style>`;
     }
-    return ''; // Remove missing local files
+    return match; // Keep original tag if file not found locally
   });
 };

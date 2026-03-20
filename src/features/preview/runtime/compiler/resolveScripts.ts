@@ -9,13 +9,13 @@ import { normalizePath, isRemote } from './utils';
 export const resolveScripts = (html: string, files: VirtualFileMap): string => {
   return html.replace(/<script\s+[^>]*src=["']([^"']+)["'][^>]*><\/script>/gi, (match, src) => {
     if (isRemote(src)) {
-      return ''; // Remove remote scripts
+      return match; // Keep remote scripts
     }
     const cleanSrc = normalizePath(src);
     const content = files[cleanSrc] || files[src];
     if (content !== undefined) {
       return `<script>${content}</script>`;
     }
-    return ''; // Remove missing local files
+    return match; // Keep original tag if file not found locally
   });
 };
